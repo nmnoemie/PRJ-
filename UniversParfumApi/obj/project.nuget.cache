@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "95dJHp0l1UU=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\noemi\\Desktop\\TransportExpress\\PRJ-\\UniversParfumApi\\UniversParfumApi.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\noemi\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.14\\microsoft.aspnetcore.openapi.10.0.14.nupkg.sha512",
+    "C:\\Users\\noemi\\.nuget\\packages\\microsoft.openapi\\2.12.2\\microsoft.openapi.2.12.2.nupkg.sha512"
+  ],
+  "logs": []
+}
