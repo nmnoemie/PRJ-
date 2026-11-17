@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catalogue - Univers Parfum</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header></header>
+
+  <main class="container mt-4">
+    <h1>Notre Catalogue</h1>
+    
+    <!-- Filtres (optionnels pour l'instant, on les branchera après) -->
+    <div style="margin: 20px 0; display: flex; gap: 10px;">
+      <select id="filtre-marque" class="form-group" style="padding: 8px; border-radius: 8px;">
+        <option value="">Toutes les marques</option>
+      </select>
+    </div>
+
+    <div id="grille-catalogue" class="grid-parfums">
+      <p>Chargement...</p>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      injecterMenu("catalogue");
+
+      async function chargerParfums(marque = "") {
+        const grille = document.getElementById("grille-catalogue");
+        grille.innerHTML = "<p>Chargement...</p>";
+        
+        try {
+          const parfums = await api.getParfums(marque ? { marque } : {});
+          
+          if (parfums.length === 0) {
+            grille.innerHTML = "<p>Aucun parfum trouvé.</p>";
+            return;
+          }
+
+          grille.innerHTML = parfums.map(p => `
+            <div class="carte-parfum">
+              <div class="visuel" style="background: ${p.degrade || '#ccc'}">
+                ${p.stock_disponible === 0 ? '<span class="badge badge-rupture">Rupture</span>' : ''}
+              </div>
+              <div class="infos">
+                <p class="marque">${p.marque}</p>
+                <h3>${p.nom}</h3>
+                <p class="prix">${formatPrix(p.prix)}</p>
+                <a href="parfum.html?ref=${p.reference}" class="btn btn-secondary">Voir la fiche</a>
+              </div>
+            </div>
+          `).join("");
+
+          // Remplir le filtre des marques
+          const marques = [...new Set(parfums.map(p => p.marque))];
+          const select = document.getElementById("filtre-marque");
+          if (select.options.length <= 1) {
+            marques.forEach(m => {
+              const opt = document.createElement("option");
+              opt.value = m;
+              opt.textContent = m;
+              select.appendChild(opt);
+            });
+          }
+
+        } catch (err) {
+          console.error(err);
+          grille.innerHTML = `<p class="error">Erreur : ${err.message}</p>`;
+        }
+      }
+
+      // Chargement initial
+      chargerParfums();
+
+      // Écouteur sur le filtre
+      document.getElementById("filtre-marque").addEventListener("change", (e) => {
+        chargerParfums(e.target.value);
+      });
+    });
+  </script>
+</body>
+</html>

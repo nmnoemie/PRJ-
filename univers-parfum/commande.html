@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détail Commande - Univers Parfum</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header></header>
+
+  <main class="container mt-4" id="contenu-commande">
+    <p>Chargement...</p>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      injecterMenu("mes-commandes");
+      const params = new URLSearchParams(window.location.search);
+      const commandeId = params.get("id");
+      const container = document.getElementById("contenu-commande");
+
+      if (!commandeId) {
+        container.innerHTML = "<h2>Erreur : Commande introuvable.</h2>";
+        return;
+      }
+
+      try {
+        const commande = await api.getCommande(commandeId);
+        
+        // Affichage basique pour l'instant
+        container.innerHTML = `
+          <a href="mes-commandes.html" style="color: var(--primaire); text-decoration: none; margin-bottom: 20px; display: inline-block;">&larr; Retour aux commandes</a>
+          <h1>Commande #${commande.id}</h1>
+          <p><strong>Statut :</strong> ${commande.statut}</p>
+          <p><strong>Date :</strong> ${formatDate(commande.date_creation)}</p>
+          <p><strong>Total :</strong> ${formatPrix(commande.montant_total)}</p>
+        `;
+      } catch (err) {
+        container.innerHTML = `<h2>Erreur : ${err.message}</h2>`;
+      }
+    });
+  </script>
+</body>
+</html>

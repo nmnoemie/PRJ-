@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Préparation - Univers Parfum</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header></header>
+  <main class="container mt-4">
+    <h1>Espace Préparateur</h1>
+    <div id="liste-commandes" class="grid-parfums" style="grid-template-columns: 1fr; margin-top: 20px;"><p>Chargement...</p></div>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      injecterMenu("preparation");
+      const user = api.getUser();
+      if (!user || (user.role !== "PREPARATEUR" && user.role !== "ADMINISTRATEUR" && user.role !== "ADMIN")) {
+        document.getElementById("liste-commandes").innerHTML = "<h2>Accès refusé</h2>";
+        return;
+      }
+
+      async function charger() {
+        try {
+          const commandes = await api.getPreparation();
+          const container = document.getElementById("liste-commandes");
+          if (commandes.length === 0) {
+            container.innerHTML = "<p>Aucune commande à préparer pour le moment.</p>";
+            return;
+          }
+          container.innerHTML = commandes.map(c => `
+            <div class="carte-parfum" style="padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>Commande #${c.id}</h3>
+                <span class="badge" style="background: var(--primaire); color: white;">${c.statut}</span>
+              </div>
+              <p><strong>Client :</strong> ${c.prenom} ${c.nom}</p>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                ${c.lignes.map(l => `<li>${l.quantite}x ${l.nom} ${l.indisponible ? '<strong style="color:red">(Indisponible)</strong>' : ''}</li>`).join("")}
+              </ul>
+              <div style="margin-top: 15px; display: flex; gap: 10px;">
+                ${c.statut === 'PAYEE' ? `<button class="btn btn-primary" onclick="prendre(${c.id})">Prendre en charge</button>` : ''}
+                ${c.statut === 'EN_PREPARATION' ? `<button class="btn btn-primary" onclick="marquerPrete(${c.id})">Marquer prête</button>` : ''}
+              </div>
+            </div>
+          `).join("");
+        } catch (err) { notifier("Erreur de chargement", "error"); }
+      }
+
+      window.prendre = async (id) => {
+        try { await api.prendreEnCharge(id); notifier("Commande prise en charge !", "success"); charger(); } catch (e) { notifier(e.message, "error"); }
+      };
+      window.marquerPrete = async (id) => {
+        try { await api.marquerPrete(id); notifier("Commande prête !", "success"); charger(); } catch (e) { notifier(e.message, "error"); }
+      };
+      charger();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+/* --- VARIABLES & RESET --- */
+:root {
+  --primaire: #8c6a3d; /* Or / Bronze */
+  --primaire-hover: #6d5230;
+  --fond: #faf8f5; /* Blanc cassé chaleureux */
+  --texte: #2c2a29;
+  --texte-doux: #6b6661;
+  --blanc: #ffffff;
+  --bordure: #e8e3dc;
+  --danger: #a33a3a;
+  --succes: #2e7d32;
+  --ombre: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --radius: 12px;
+  --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background-color: var(--fond);
+  color: var(--texte);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* --- HEADER & NAVIGATION --- */
+header {
+  background-color: var(--blanc);
+  border-bottom: 1px solid var(--bordure);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+}
+
+.logo {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--texte);
+  text-decoration: none;
+  letter-spacing: 1px;
+  font-family: serif;
+}
+
+.main-nav { display: flex; gap: 20px; }
+.main-nav a {
+  color: var(--texte-doux);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.main-nav a:hover, .main-nav a.active { color: var(--primaire); }
+
+.nav-user { display: flex; align-items: center; gap: 15px; }
+.user-info { font-size: 0.85rem; color: var(--texte-doux); }
+
+/* --- BOUTONS --- */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  text-align: center;
+}
+.btn-primary { background-color: var(--primaire); color: var(--blanc); }
+.btn-primary:hover { background-color: var(--primaire-hover); }
+.btn-secondary { background-color: var(--blanc); color: var(--texte); border: 1px solid var(--bordure); }
+.btn-secondary:hover { border-color: var(--primaire); color: var(--primaire); }
+.btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+.btn-danger { background-color: var(--danger); color: white; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* --- HERO SECTION --- */
+.hero {
+  background: linear-gradient(135deg, #f2ede4, #e5d9c5);
+  padding: 80px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--bordure);
+}
+.hero h1 { font-family: serif; font-size: 2.5rem; margin-bottom: 15px; }
+.hero p { color: var(--texte-doux); font-size: 1.1rem; margin-bottom: 30px; }
+
+/* --- CARTES PARFUMS --- */
+.mt-4 { margin-top: 2rem; }
+h2 { font-family: serif; font-size: 1.8rem; margin-bottom: 20px; }
+
+.grid-parfums {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.carte-parfum {
+  background: var(--blanc);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--ombre);
+  transition: transform 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+.carte-parfum:hover { transform: translateY(-5px); }
+
+.visuel {
+  height: 200px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 10px;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.badge-rupture { background-color: var(--danger); color: white; }
+
+.infos { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+.infos .marque { font-size: 0.8rem; color: var(--primaire); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin-bottom: 5px; }
+.infos h3 { font-size: 1.2rem; margin-bottom: 10px; }
+.infos .prix { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: var(--texte); }
+.infos .btn { margin-top: auto; }
+
+/* --- FORMULAIRES & UTILITAIRES --- */
+.form-card {
+  background: var(--blanc);
+  padding: 30px;
+  border-radius: var(--radius);
+  box-shadow: var(--ombre);
+  max-width: 450px;
+  margin: 40px auto;
+}
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  font-family: inherit;
+}
+.form-group input:focus { outline: none; border-color: var(--primaire); }
+
+/* --- TOAST NOTIFICATIONS --- */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #333;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 1000;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { background: var(--danger); }
+.toast.success { background: var(--succes); }
+
+/* --- FOOTER --- */
+.footer {
+  text-align: center;
+  padding: 30px;
+  border-top: 1px solid var(--bordure);
+  margin-top: 40px;
+  color: var(--texte-doux);
+  font-size: 0.9rem;
+}
+.footer .btn { margin-top: 10px; }

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiche Parfum - Univers Parfum</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header></header>
+
+  <main class="container mt-4" id="contenu-fiche">
+    <p>Chargement...</p>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      injecterMenu("catalogue");
+
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get("ref");
+      const container = document.getElementById("contenu-fiche");
+
+      if (!ref) {
+        container.innerHTML = "<h2>Erreur : Aucun parfum spécifié.</h2>";
+        return;
+      }
+
+      try {
+        const p = await api.getParfum(ref);
+        const user = api.getUser();
+
+        let boutonAction = "";
+        if (user && user.role === "CLIENT") {
+          if (p.stock_disponible > 0) {
+            boutonAction = `<button id="btn-ajouter" class="btn btn-primary">Ajouter au panier</button>`;
+          } else {
+            boutonAction = `<p style="color: var(--danger); font-weight: bold;">Rupture de stock</p>`;
+          }
+        } else if (!user) {
+          boutonAction = `<a href="login.html" class="btn btn-secondary">Connectez-vous pour acheter</a>`;
+        }
+
+        container.innerHTML = `
+          <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+              <div style="height: 400px; background: ${p.degrade || '#ccc'}; border-radius: 12px; box-shadow: var(--ombre);"></div>
+            </div>
+            <div style="flex: 1; min-width: 300px;">
+              <p class="marque" style="color: var(--primaire); text-transform: uppercase;">${p.marque}</p>
+              <h1 style="font-family: serif; font-size: 2.5rem; margin: 10px 0;">${p.nom}</h1>
+              <p class="prix" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 20px;">${formatPrix(p.prix)}</p>
+              
+              <p style="margin-bottom: 10px;"><strong>Contenance :</strong> ${p.contenance_ml} ml</p>
+              <p style="margin-bottom: 20px; color: var(--texte-doux);"><strong>Description :</strong> ${p.description || 'Aucune description disponible.'}</p>
+              
+              <div style="margin-top: 30px;">
+                ${boutonAction}
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Écouteur sur le bouton "Ajouter au panier"
+        const btnAjouter = document.getElementById("btn-ajouter");
+        if (btnAjouter) {
+          btnAjouter.addEventListener("click", async () => {
+            try {
+              await api.addToPanier(p.reference, 1);
+              notifier("Ajouté au panier avec succès !", "success");
+              btnAjouter.textContent = "Ajouté !";
+              btnAjouter.disabled = true;
+              setTimeout(() => {
+                btnAjouter.textContent = "Ajouter au panier";
+                btnAjouter.disabled = false;
+              }, 2000);
+            } catch (err) {
+              notifier(err.message || "Erreur lors de l'ajout.", "error");
+            }
+          });
+        }
+
+      } catch (err) {
+        container.innerHTML = `<h2>Erreur : ${err.message}</h2>`;
+      }
+    });
+  </script>
+</body>
+</html>

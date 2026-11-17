@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Panier - Univers Parfum</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header></header>
+  <main class="container mt-4">
+    <h1>Mon Panier</h1>
+    <div id="contenu-panier" style="margin-top: 20px;"><p>Chargement...</p></div>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      injecterMenu("panier");
+      const user = api.getUser();
+      if (!user || user.role !== "CLIENT") {
+        document.getElementById("contenu-panier").innerHTML = "<h2>Accès refusé. Connectez-vous en tant que client.</h2>";
+        return;
+      }
+
+      async function chargerPanier() {
+        try {
+          const panier = await api.getPanier();
+          const container = document.getElementById("contenu-panier");
+          if (!panier.lignes || panier.lignes.length === 0) {
+            container.innerHTML = "<p>Votre panier est vide. <a href='catalogue.html'>Découvrir le catalogue</a></p>";
+            return;
+          }
+          container.innerHTML = `
+            <div class="grid-parfums" style="grid-template-columns: 1fr;">
+              ${panier.lignes.map(l => `
+                <div class="carte-parfum" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                  <div><h3>${l.nom}</h3><p>${formatPrix(l.prix_unitaire)}</p></div>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" value="${l.quantite}" min="1" max="${l.stock_disponible}" onchange="updateQte(${l.id}, this.value)" style="width: 60px; padding: 5px;">
+                    <button class="btn btn-danger btn-sm" onclick="supprimerLigne(${l.id})">Supprimer</button>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+            <div style="margin-top: 30px; text-align: right; border-top: 1px solid #eee; padding-top: 20px;">
+              <h2>Total : ${formatPrix(panier.total)}</h2>
+              <button class="btn btn-primary" onclick="payer(${panier.id}, ${panier.total})" style="margin-top: 10px;">Payer la commande</button>
+            </div>
+          `;
+        } catch (err) { document.getElementById("contenu-panier").innerHTML = `<p class="error">Erreur : ${err.message}</p>`; }
+      }
+
+      window.updateQte = async (id, qte) => { try { await api.updatePanierLigne(id, parseInt(qte)); chargerPanier(); } catch (e) { notifier(e.message, "error"); } };
+      window.supprimerLigne = async (id) => { try { await api.deletePanierLigne(id); chargerPanier(); } catch (e) { notifier(e.message, "error"); } };
+      window.payer = async (id, montant) => {
+        if (!confirm("Confirmer le paiement de " + formatPrix(montant) + " ?")) return;
+        try {
+          await api.payerCommande(id, montant);
+          notifier("Paiement accepté !", "success");
+          setTimeout(() => window.location.href = "mes-commandes.html", 1500);
+        } catch (e) { notifier(e.message, "error"); }
+      };
+      chargerPanier();
+    });
+  </script>
+</body>
+</html>

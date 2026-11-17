@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livraison - Univers Parfum</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .tableau-livraison {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--ombre);
+      margin-top: 20px;
+    }
+    .tableau-livraison th, .tableau-livraison td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid var(--bordure);
+    }
+    .tableau-livraison th {
+      background-color: var(--fond);
+      color: var(--texte);
+      font-weight: bold;
+    }
+    .tableau-livraison tr:hover { background-color: #fcfcfc; }
+  </style>
+</head>
+<body>
+  <header></header>
+
+  <main class="container mt-4">
+    <h1>Tableau de suivi des livraisons</h1>
+    <p style="color: var(--texte-doux); margin-bottom: 20px;">Gérez vos colis à livrer et suivez l'état de vos courses.</p>
+    
+    <div id="contenu-tableau">
+      <p>Chargement...</p>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      injecterMenu("livraison");
+      const user = api.getUser();
+      
+      if (!user || (user.role !== "LIVREUR" && user.role !== "ADMINISTRATEUR" && user.role !== "ADMIN")) {
+        document.getElementById("contenu-tableau").innerHTML = "<h2>Accès refusé</h2>";
+        return;
+      }
+
+      async function charger() {
+        try {
+          const commandes = await api.getLivraisons();
+          const container = document.getElementById("contenu-tableau");
+          
+          if (commandes.length === 0) {
+            container.innerHTML = "<p>Aucun colis à livrer pour le moment.</p>";
+            return;
+          }
+
+          container.innerHTML = `
+            <table class="tableau-livraison">
+              <thead>
+                <tr>
+                  <th>Colis</th>
+                  <th>Client & Adresse</th>
+                  <th>Préparé par</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${commandes.map(c => `
+                  <tr>
+                    <td>
+                      <strong>#${c.id}</strong><br>
+                      <small>Créé le : ${formatDate(c.date_creation)}</small>
+                    </td>
+                    <td>
+                      <strong>${c.client_prenom} ${c.client_nom}</strong><br>
+                      <small>${c.client_tel || 'Tél non renseigné'}</small><br>
+                      <small>${c.adresse_livraison}</small>
+                    </td>
+                    <td>${c.preparateur_prenom ? c.preparateur_prenom + ' ' + c.preparateur_nom : 'En attente'}</td>
+                    <td>
+                      <span class="badge" style="background: ${c.statut === 'PRETE' ? '#1abc9c' : '#e67e22'}; color: white;">${c.statut}</span>
+                    </td>
+                    <td>
+                      <div style="display: flex; flex-direction: column; gap: 5px;">
+                        ${c.statut === 'PRETE' ? `<button class="btn btn-primary btn-sm" onclick="recuperer(${c.id})">Récupérer</button>` : ''}
+                        ${c.statut === 'EN_LIVRAISON' ? `
+                          <button class="btn btn-primary btn-sm" onclick="livrer(${c.id})">Confirmer Remise</button>
+                          <button class="btn btn-danger btn-sm" onclick="echec(${c.id})">Signaler Échec</button>
+                        ` : ''}
+                      </div>
+                    </td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          `;
+        } catch (err) {
+          notifier("Erreur de chargement du tableau.", "error");
+          document.getElementById("contenu-tableau").innerHTML = `<p class="error">Erreur : ${err.message}</p>`;
+        }
+      }
+
+      window.recuperer = async (id) => {
+        try { await api.recupererColis(id); notifier("Colis récupéré !", "success"); charger(); } catch (e) { notifier(e.message, "error"); }
+      };
+      
+      window.livrer = async (id) => {
+        try { await api.confirmerLivraison(id); notifier("Colis livré !", "success"); charger(); } catch (e) { notifier(e.message, "error"); }
+      };
+      
+      window.echec = async (id) => {
+        const motif = prompt("Motif de l'échec (obligatoire) :");
+        if (!motif) return;
+        try { await api.signalerEchec(id, motif); notifier("Échec enregistré.", "success"); charger(); } catch (e) { notifier(e.message, "error"); }
+      };
+
+      charger();
+    });
+  </script>
+</body>
+</html>

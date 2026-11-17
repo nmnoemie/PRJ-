@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes Commandes - Univers Parfum</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header></header>
+  <main class="container mt-4">
+    <h1>Mes Commandes</h1>
+    <div id="liste-commandes" class="grid-parfums" style="grid-template-columns: 1fr; margin-top: 20px;"><p>Chargement...</p></div>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      injecterMenu("mes-commandes");
+      const user = api.getUser();
+      if (!user || user.role !== "CLIENT") {
+        document.getElementById("liste-commandes").innerHTML = "<h2>Accès refusé</h2>";
+        return;
+      }
+
+      async function chargerCommandes() {
+        try {
+          const commandes = await api.getCommandes();
+          const container = document.getElementById("liste-commandes");
+          if (commandes.length === 0) {
+            container.innerHTML = "<p>Aucune commande pour le moment.</p>";
+            return;
+          }
+          const couleurs = { EN_ATTENTE_PAIEMENT: "#f39c12", PAYEE: "#3498db", EN_PREPARATION: "#9b59b6", PRETE: "#1abc9c", EN_LIVRAISON: "#e67e22", LIVREE: "#2ecc71", ANNULEE: "#e74c3c" };
+          container.innerHTML = commandes.map(c => `
+            <div class="carte-parfum" style="padding: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h3>Commande #${c.id}</h3>
+                  <p>Date : ${formatDate(c.date_creation)}</p>
+                  <p>Total : <strong>${formatPrix(c.montant_total)}</strong></p>
+                </div>
+                <div style="text-align: right;">
+                  <span class="badge" style="background: ${couleurs[c.statut] || '#333'}; color: white; padding: 8px 12px;">${c.statut}</span>
+                  <br><br>
+                  <a href="commande.html?id=${c.id}" class="btn btn-secondary btn-sm">Voir le détail</a>
+                </div>
+              </div>
+            </div>
+          `).join("");
+        } catch (err) { notifier("Erreur de chargement.", "error"); }
+      }
+      chargerCommandes();
+    });
+  </script>
+</body>
+</html>

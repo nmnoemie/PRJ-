@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Univers Parfum – Test de connexion</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 420px; margin: 60px auto; padding: 0 16px; }
+  input, button { width: 100%; padding: 10px; margin: 6px 0; box-sizing: border-box; font-size: 16px; }
+  button { cursor: pointer; }
+  pre { background: #f3f3f3; padding: 12px; overflow: auto; white-space: pre-wrap; }
+  .ok { color: #0a7a2f; } .ko { color: #b00020; }
+</style>
+</head>
+<body>
+  <h1>Connexion</h1>
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Mot de passe">
+  <button id="btnLogin">Se connecter</button>
+
+  <div id="connecte" hidden>
+    <button id="btnEspace">Tester mon espace</button>
+    <button id="btnAdmin">Tester l'espace administrateur</button>
+    <button id="btnOut">Se déconnecter</button>
+  </div>
+
+  <p id="msg"></p>
+  <pre id="res" hidden></pre>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const ESPACES = { ADMINISTRATEUR: 'admin', PREPARATEUR: 'preparation', LIVREUR: 'livraison', CLIENT: 'client' };
+  let token = sessionStorage.getItem('token');
+  let role = sessionStorage.getItem('role');
+
+  function afficher(ok, texte, data) {
+    $('msg').className = ok ? 'ok' : 'ko';
+    $('msg').textContent = texte;
+    $('res').hidden = data === undefined;
+    if (data !== undefined) $('res').textContent = JSON.stringify(data, null, 2);
+  }
+
+  function majEtat() { $('connecte').hidden = !token; }
+
+  async function appeler(url, options = {}) {
+    const r = await fetch(url, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+    });
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, data };
+  }
+
+  $('btnLogin').onclick = async () => {
+    const { ok, status, data } = await appeler('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: $('email').value, password: $('password').value }),
+    });
+    if (!ok) return afficher(false, `Échec (${status}) : ${data.message || 'erreur'}`);
+    token = data.token; role = data.role;
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('role', role);
+    majEtat();
+    const me = await appeler('/api/me');
+    afficher(true, `Connecté en tant que ${data.prenom} ${data.nom} (${role})`, me.data);
+  };
+
+  $('btnEspace').onclick = async () => {
+    const { ok, status, data } = await appeler('/api/espace/' + ESPACES[role]);
+    afficher(ok, `Espace ${role} : ${status}`, data);
+  };
+
+  $('btnAdmin').onclick = async () => {
+    const { ok, status, data } = await appeler('/api/espace/admin');
+    afficher(ok, `Espace administrateur : ${status} ${ok ? '(accès autorisé)' : '(accès refusé)'}`, data);
+  };
+
+  $('btnOut').onclick = () => {
+    sessionStorage.clear(); token = role = null; majEtat(); afficher(true, 'Déconnecté');
+  };
+
+  majEtat();
+</script>
+</body>
+</html>
