@@ -1,6 +1,0 @@
-@UniversParfumApi_HostAddress = http://localhost:5197
-
-GET {{UniversParfumApi_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
