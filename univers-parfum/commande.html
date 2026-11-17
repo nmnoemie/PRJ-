@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Détail Commande - Univers Parfum</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Styles pour la frise chronologique */
+    .timeline { position: relative; margin: 40px 0; padding-left: 30px; border-left: 2px solid var(--bordure); }
+    .timeline-item { position: relative; margin-bottom: 25px; }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -36px; top: 0;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--primaire); border: 3px solid var(--fond);
+    }
+    .timeline-date { font-size: 0.85rem; color: var(--texte-doux); margin-bottom: 5px; }
+    .timeline-title { font-weight: bold; font-size: 1.1rem; }
+  </style>
 </head>
 <body>
   <header></header>
@@ -32,13 +44,39 @@
       try {
         const commande = await api.getCommande(commandeId);
         
-        // Affichage basique pour l'instant
+        // (Si votre backend ne renvoie pas encore l'historique, on fait un affichage de secours basique)
+        const historique = commande.historique || [];
+
         container.innerHTML = `
           <a href="mes-commandes.html" style="color: var(--primaire); text-decoration: none; margin-bottom: 20px; display: inline-block;">&larr; Retour aux commandes</a>
-          <h1>Commande #${commande.id}</h1>
-          <p><strong>Statut :</strong> ${commande.statut}</p>
-          <p><strong>Date :</strong> ${formatDate(commande.date_creation)}</p>
-          <p><strong>Total :</strong> ${formatPrix(commande.montant_total)}</p>
+          
+          <div class="carte-parfum" style="padding: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--bordure); padding-bottom: 20px; margin-bottom: 20px;">
+              <div>
+                <h1>Commande #${commande.id}</h1>
+                <p>Passée le ${formatDate(commande.date_creation)}</p>
+              </div>
+              <div style="text-align: right;">
+                <h2>${formatPrix(commande.montant_total)}</h2>
+                <span class="badge" style="background: var(--primaire); color: white;">${commande.statut}</span>
+              </div>
+            </div>
+
+            <h3>Suivi de votre colis</h3>
+            ${historique.length > 0 ? `
+              <div class="timeline">
+                ${historique.map(h => `
+                  <div class="timeline-item">
+                    <div class="timeline-date">${formatDate(h.date_heure)}</div>
+                    <div class="timeline-title">Statut : ${h.nouveau_statut}</div>
+                    <div style="font-size: 0.9rem; color: var(--texte-doux);">Par ${h.auteur || 'Système'}</div>
+                  </div>
+                `).join("")}
+              </div>
+            ` : `
+              <p style="margin-top: 20px; color: var(--texte-doux);">Statut actuel : ${commande.statut}. Aucun historique détaillé disponible.</p>
+            `}
+          </div>
         `;
       } catch (err) {
         container.innerHTML = `<h2>Erreur : ${err.message}</h2>`;

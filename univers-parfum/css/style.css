@@ -1,15 +1,15 @@
 /* --- VARIABLES & RESET --- */
 :root {
-  --primaire: #8c6a3d; /* Or / Bronze */
-  --primaire-hover: #6d5230;
-  --fond: #faf8f5; /* Blanc cassé chaleureux */
+  --primaire: #7b1b2b; /* Bordeaux élégant */
+  --primaire-hover: #5c111e; /* Bordeaux plus sombre pour le survol */
+  --fond: #faf8f8; /* Blanc cassé avec une pointe de rosé */
   --texte: #2c2a29;
   --texte-doux: #6b6661;
   --blanc: #ffffff;
   --bordure: #e8e3dc;
   --danger: #a33a3a;
   --succes: #2e7d32;
-  --ombre: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --ombre: 0 4px 12px rgba(123, 27, 43, 0.06); /* Ombre légèrement colorée */
   --radius: 12px;
   --font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -48,7 +48,7 @@ header {
 .logo {
   font-size: 1.4rem;
   font-weight: bold;
-  color: var(--texte);
+  color: var(--primaire); /* Le logo prend la couleur bordeaux */
   text-decoration: none;
   letter-spacing: 1px;
   font-family: serif;
@@ -89,12 +89,12 @@ header {
 
 /* --- HERO SECTION --- */
 .hero {
-  background: linear-gradient(135deg, #f2ede4, #e5d9c5);
+  background: linear-gradient(135deg, #f7ebea, #ebd3d6); /* Dégradé de bordeaux très clair */
   padding: 80px 20px;
   text-align: center;
   border-bottom: 1px solid var(--bordure);
 }
-.hero h1 { font-family: serif; font-size: 2.5rem; margin-bottom: 15px; }
+.hero h1 { font-family: serif; font-size: 2.5rem; margin-bottom: 15px; color: var(--primaire); }
 .hero p { color: var(--texte-doux); font-size: 1.1rem; margin-bottom: 30px; }
 
 /* --- CARTES PARFUMS --- */

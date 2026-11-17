@@ -46,13 +46,11 @@
     document.addEventListener("DOMContentLoaded", () => {
       injecterMenu("login");
 
-      // Boutons de pré-remplissage
       window.remplir = (email) => {
         document.getElementById("email").value = email;
         document.getElementById("password").value = "Test1234!";
       };
 
-      // Soumission du formulaire
       document.getElementById("form-login").addEventListener("submit", async (e) => {
         e.preventDefault();
         const email = document.getElementById("email").value;
@@ -62,19 +60,12 @@
           const data = await api.login(email, password);
           notifier("Connexion réussie !", "success");
           
-          // Redirection selon le rôle
-          setTimeout(() => {
-            const role = data.role || (data.user && data.user.role);
-            if (role === "ADMINISTRATEUR" || role === "ADMIN") {
-              window.location.href = "admin.html";
-            } else if (role === "PREPARATEUR") {
-              window.location.href = "preparation.html";
-            } else if (role === "LIVREUR") {
-              window.location.href = "livraison.html";
-            } else {
-              window.location.href = "index.html"; // Client
-            }
-          }, 1000);
+          // Redirection basée sur le rôle (sécurisé côté client)
+          const role = data.role || (data.user && data.user.role);
+          if (role === "ADMINISTRATEUR" || role === "ADMIN") window.location.href = "admin.html";
+          else if (role === "PREPARATEUR") window.location.href = "preparation.html";
+          else if (role === "LIVREUR") window.location.href = "livraison.html";
+          else window.location.href = "index.html"; // Client par défaut
           
         } catch (err) {
           notifier(err.message || "Email ou mot de passe incorrect.", "error");

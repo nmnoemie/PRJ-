@@ -19,8 +19,10 @@
     document.addEventListener("DOMContentLoaded", async () => {
       injecterMenu("preparation");
       const user = api.getUser();
+      
+      // SÉCURITÉ : Vérification du rôle
       if (!user || (user.role !== "PREPARATEUR" && user.role !== "ADMINISTRATEUR" && user.role !== "ADMIN")) {
-        document.getElementById("liste-commandes").innerHTML = "<h2>Accès refusé</h2>";
+        window.location.href = "login.html";
         return;
       }
 
@@ -28,10 +30,7 @@
         try {
           const commandes = await api.getPreparation();
           const container = document.getElementById("liste-commandes");
-          if (commandes.length === 0) {
-            container.innerHTML = "<p>Aucune commande à préparer pour le moment.</p>";
-            return;
-          }
+          if (commandes.length === 0) { container.innerHTML = "<p>Aucune commande à préparer pour le moment.</p>"; return; }
           container.innerHTML = commandes.map(c => `
             <div class="carte-parfum" style="padding: 20px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">

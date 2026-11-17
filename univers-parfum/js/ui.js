@@ -30,39 +30,50 @@
 
     const user = window.api ? window.api.getUser() : null;
     
-    // Liens de gauche
-    let liens = `<a href="index.html" ${pageActive === 'index' ? 'class="active"' : ''}>Accueil</a>`;
-    liens += `<a href="catalogue.html" ${pageActive === 'catalogue' ? 'class="active"' : ''}>Catalogue</a>`;
+    let liens = "";
 
-    // Liens selon le rôle
+    // 1. Liens publics (Visiteur non connecté ou Client)
+    if (!user || user.role === "CLIENT") {
+      liens += `<a href="index.html" ${pageActive === 'index' ? 'class="active"' : ''}>Accueil</a>`;
+      liens += `<a href="catalogue.html" ${pageActive === 'catalogue' ? 'class="active"' : ''}>Catalogue</a>`;
+    }
+
+    // 2. Liens spécifiques selon le rôle
     if (user) {
       if (user.role === "CLIENT") {
         liens += `<a href="panier.html" ${pageActive === 'panier' ? 'class="active"' : ''}>Panier</a>`;
         liens += `<a href="mes-commandes.html" ${pageActive === 'mes-commandes' ? 'class="active"' : ''}>Mes commandes</a>`;
       } else if (user.role === "PREPARATEUR") {
-        liens += `<a href="preparation.html" ${pageActive === 'preparation' ? 'class="active"' : ''}>Préparation</a>`;
+        liens += `<a href="preparation.html" ${pageActive === 'preparation' ? 'class="active"' : ''}>Espace Préparation</a>`;
       } else if (user.role === "LIVREUR") {
-        liens += `<a href="livraison.html" ${pageActive === 'livraison' ? 'class="active"' : ''}>Livraison</a>`;
+        liens += `<a href="livraison.html" ${pageActive === 'livraison' ? 'class="active"' : ''}>Espace Livraison</a>`;
       } else if (user.role === "ADMIN" || user.role === "ADMINISTRATEUR") {
-        liens += `<a href="admin.html" ${pageActive === 'admin' ? 'class="active"' : ''}>Admin</a>`;
+        liens += `<a href="admin.html" ${pageActive === 'admin' ? 'class="active"' : ''}>Espace Admin</a>`;
       }
     }
 
-    // Menu de droite
+    // 3. Menu de droite
     let navDroite = "";
     if (user) {
-      // Si connecté : nom + déconnexion
       navDroite = `<span class="user-info">${user.prenom} ${user.nom} (${user.role})</span>
                    <button class="btn btn-secondary btn-sm" onclick="window.api.logout(); window.location.href='index.html';">Déconnexion</button>`;
     } else {
-      // Si non connecté : bouton Connexion classique
       navDroite = `<a href="login.html" class="btn btn-primary btn-sm">Connexion</a>`;
+    }
+
+    // 4. Lien du logo (Adapté selon le rôle)
+    // Un préparateur ne doit pas retourner sur l'accueil public en cliquant sur le logo
+    let lienLogo = "index.html";
+    if (user) {
+      if (user.role === "PREPARATEUR") lienLogo = "preparation.html";
+      else if (user.role === "LIVREUR") lienLogo = "livraison.html";
+      else if (user.role === "ADMIN" || user.role === "ADMINISTRATEUR") lienLogo = "admin.html";
     }
 
     // Injection dans le header
     header.innerHTML = `
       <div class="container nav-container">
-        <a href="index.html" class="logo">Univers Parfum</a>
+        <a href="${lienLogo}" class="logo">Univers Parfum</a>
         <nav class="main-nav">
           ${liens}
         </nav>

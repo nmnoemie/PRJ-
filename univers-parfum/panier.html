@@ -19,8 +19,10 @@
     document.addEventListener("DOMContentLoaded", async () => {
       injecterMenu("panier");
       const user = api.getUser();
+      
+      // SÉCURITÉ : Vérification du rôle
       if (!user || user.role !== "CLIENT") {
-        document.getElementById("contenu-panier").innerHTML = "<h2>Accès refusé. Connectez-vous en tant que client.</h2>";
+        window.location.href = "login.html"; // Redirection au lieu d'un message bloquant
         return;
       }
 

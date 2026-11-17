@@ -11,8 +11,6 @@
     .tab.active { color: var(--primaire); border-bottom-color: var(--primaire); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .admin-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-    @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden; box-shadow: var(--ombre); }
     th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
     th { background: #f9f9f9; font-weight: bold; }
@@ -20,22 +18,19 @@
 </head>
 <body>
   <header></header>
-
   <main class="container mt-4">
     <h1>Espace Administrateur</h1>
     
     <div class="tabs">
       <div class="tab active" data-target="tab-parfums">Parfums</div>
       <div class="tab" data-target="tab-users">Utilisateurs</div>
-      <div class="tab" data-target="tab-promos">Promotions</div>
-      <div class="tab" data-target="tab-zones">Zones de livraison</div>
       <div class="tab" data-target="tab-litiges">Litiges</div>
     </div>
 
-    <!-- 1. PARFUMS -->
+    <!-- Onglet Parfums -->
     <div id="tab-parfums" class="tab-content active">
-      <div class="admin-grid">
-        <div class="form-card" style="margin: 0;">
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div class="form-card" style="flex: 1; min-width: 300px; margin: 0;">
           <h3>Ajouter un parfum</h3>
           <form id="form-parfum">
             <div class="form-group"><label>Référence</label><input type="text" id="ref" required></div>
@@ -47,17 +42,15 @@
             <button type="submit" class="btn btn-primary" style="width:100%;">Créer</button>
           </form>
         </div>
-        <div>
-          <div id="liste-parfums"></div>
-        </div>
+        <div style="flex: 2; min-width: 300px;" id="liste-parfums"></div>
       </div>
     </div>
 
-    <!-- 2. UTILISATEURS -->
+    <!-- Onglet Utilisateurs -->
     <div id="tab-users" class="tab-content">
-      <div class="admin-grid">
-        <div class="form-card" style="margin: 0;">
-          <h3>Créer un compte (Prepa/Livreur)</h3>
+      <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div class="form-card" style="flex: 1; min-width: 300px; margin: 0;">
+          <h3>Créer un compte</h3>
           <form id="form-user">
             <div class="form-group"><label>Nom</label><input type="text" id="u-nom" required></div>
             <div class="form-group"><label>Prénom</label><input type="text" id="u-prenom" required></div>
@@ -67,66 +60,34 @@
               <select id="u-role"><option value="PREPARATEUR">Préparateur</option><option value="LIVREUR">Livreur</option></select>
             </div>
             <div class="form-group"><label>Téléphone</label><input type="text" id="u-tel"></div>
-            <button type="submit" class="btn btn-primary" style="width:100%;">Créer l'utilisateur</button>
-          </form>
-        </div>
-        <div id="liste-users"></div>
-      </div>
-    </div>
-
-    <!-- 3. PROMOTIONS -->
-    <div id="tab-promos" class="tab-content">
-      <div class="admin-grid">
-        <div class="form-card" style="margin: 0;">
-          <h3>Nouvelle promotion</h3>
-          <form id="form-promo">
-            <div class="form-group"><label>Code (ex: NOEL20)</label><input type="text" id="p-code" required></div>
-            <div class="form-group"><label>Pourcentage de réduction (%)</label><input type="number" id="p-pourcentage" required></div>
-            <div class="form-group"><label>Date de début</label><input type="date" id="p-debut" required></div>
-            <div class="form-group"><label>Date de fin</label><input type="date" id="p-fin" required></div>
             <button type="submit" class="btn btn-primary" style="width:100%;">Créer</button>
           </form>
         </div>
-        <div id="liste-promos"></div>
+        <div style="flex: 2; min-width: 300px;" id="liste-users"></div>
       </div>
     </div>
 
-    <!-- 4. ZONES -->
-    <div id="tab-zones" class="tab-content">
-      <div class="admin-grid">
-        <div class="form-card" style="margin: 0;">
-          <h3>Nouvelle zone</h3>
-          <form id="form-zone">
-            <div class="form-group"><label>Nom de la zone</label><input type="text" id="z-nom" required></div>
-            <div class="form-group"><label>Frais de livraison (€)</label><input type="number" step="0.01" id="z-frais" required></div>
-            <button type="submit" class="btn btn-primary" style="width:100%;">Créer</button>
-          </form>
-        </div>
-        <div id="liste-zones"></div>
-      </div>
-    </div>
-
-    <!-- 5. LITIGES -->
+    <!-- Onglet Litiges -->
     <div id="tab-litiges" class="tab-content">
       <div id="liste-litiges"></div>
     </div>
-
   </main>
 
   <div id="toast" class="toast"></div>
-
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       injecterMenu("admin");
       const user = api.getUser();
+      
+      // SÉCURITÉ : Vérification du rôle Admin
       if (!user || (user.role !== "ADMIN" && user.role !== "ADMINISTRATEUR")) {
-        document.querySelector("main").innerHTML = "<h2>Accès refusé</h2>";
+        window.location.href = "login.html";
         return;
       }
 
-      // --- GESTION DES ONGLETS ---
+      // Gestion des onglets
       document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
           document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -136,7 +97,7 @@
         });
       });
 
-      // --- CHARGEMENT DES DONNÉES ---
+      // Chargement des données
       async function chargerTout() {
         // Parfums
         try {
@@ -153,27 +114,9 @@
             ${users.map(u => `<tr><td>${u.prenom} ${u.nom}</td><td>${u.email}</td><td><span class="badge" style="background:var(--primaire);color:white;">${u.role}</span></td></tr>`).join("")}</table>`;
         } catch(e) { document.getElementById("liste-users").innerHTML = "<p>Erreur API Utilisateurs</p>"; }
 
-        // Promotions (appel API à créer plus tard)
+        // Litiges (Commandes en cours ou annulées)
         try {
-          const promos = await fetch("http://localhost:3000/api/admin/promotions", { headers: { "Authorization": "Bearer " + localStorage.getItem("up_token") } }).then(r => r.json());
-          if(Array.isArray(promos)) {
-            document.getElementById("liste-promos").innerHTML = `<table><tr><th>Code</th><th>Réduction</th><th>Fin</th></tr>
-              ${promos.map(p => `<tr><td>${p.code}</td><td>${p.pourcentage}%</td><td>${formatDate(p.date_fin)}</td></tr>`).join("")}</table>`;
-          }
-        } catch(e) { document.getElementById("liste-promos").innerHTML = "<p>Aucune promotion ou API manquante.</p>"; }
-
-        // Zones
-        try {
-          const zones = await fetch("http://localhost:3000/api/admin/zones", { headers: { "Authorization": "Bearer " + localStorage.getItem("up_token") } }).then(r => r.json());
-          if(Array.isArray(zones)) {
-            document.getElementById("liste-zones").innerHTML = `<table><tr><th>Zone</th><th>Frais</th></tr>
-              ${zones.map(z => `<tr><td>${z.nom}</td><td>${formatPrix(z.frais)}</td></tr>`).join("")}</table>`;
-          }
-        } catch(e) { document.getElementById("liste-zones").innerHTML = "<p>Aucune zone ou API manquante.</p>"; }
-
-        // Litiges (Commandes en attente d'arbitrage)
-        try {
-          const commandes = await api.getCommandes(); // Récupère tout pour l'admin
+          const commandes = await api.getCommandes();
           const litiges = commandes.filter(c => c.statut === 'EN_LIVRAISON' || c.statut === 'ANNULEE');
           document.getElementById("liste-litiges").innerHTML = `<table><tr><th>Commande</th><th>Statut</th><th>Action</th></tr>
             ${litiges.map(c => `<tr><td>#${c.id}</td><td>${c.statut}</td>
@@ -183,8 +126,7 @@
 
       chargerTout();
 
-      // --- SOUMISSIONS DES FORMULAIRES ---
-      
+      // Formulaires
       document.getElementById("form-parfum").addEventListener("submit", async (e) => {
         e.preventDefault();
         try {
@@ -196,9 +138,7 @@
             prix: parseFloat(document.getElementById("prix").value),
             stock_disponible: parseInt(document.getElementById("stock").value)
           });
-          notifier("Parfum créé !", "success");
-          e.target.reset();
-          chargerTout();
+          notifier("Parfum créé !", "success"); e.target.reset(); chargerTout();
         } catch (err) { notifier(err.message, "error"); }
       });
 
@@ -216,46 +156,8 @@
               telephone: document.getElementById("u-tel").value
             })
           });
-          notifier("Utilisateur créé !", "success");
-          e.target.reset();
-          chargerTout();
+          notifier("Utilisateur créé !", "success"); e.target.reset(); chargerTout();
         } catch (err) { notifier("Erreur de création", "error"); }
-      });
-
-      document.getElementById("form-promo").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        try {
-          await fetch("http://localhost:3000/api/admin/promotions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("up_token") },
-            body: JSON.stringify({
-              code: document.getElementById("p-code").value,
-              pourcentage: parseInt(document.getElementById("p-pourcentage").value),
-              date_debut: document.getElementById("p-debut").value,
-              date_fin: document.getElementById("p-fin").value
-            })
-          });
-          notifier("Promotion créée !", "success");
-          e.target.reset();
-          chargerTout();
-        } catch (err) { notifier("Erreur", "error"); }
-      });
-
-      document.getElementById("form-zone").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        try {
-          await fetch("http://localhost:3000/api/admin/zones", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("up_token") },
-            body: JSON.stringify({
-              nom: document.getElementById("z-nom").value,
-              frais: parseFloat(document.getElementById("z-frais").value)
-            })
-          });
-          notifier("Zone créée !", "success");
-          e.target.reset();
-          chargerTout();
-        } catch (err) { notifier("Erreur", "error"); }
       });
 
       window.supprParfum = async (ref) => {
@@ -264,15 +166,14 @@
       };
 
       window.arbitrer = async (id) => {
-        if (!confirm("Annuler cette commande suite à un litige ?")) return;
+        if (!confirm("Annuler cette commande ?")) return;
         try {
           await fetch(`http://localhost:3000/api/admin/commandes/${id}/arbitrer`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("up_token") },
-            body: JSON.stringify({ commentaire: "Annulé par l'administrateur après litige." })
+            body: JSON.stringify({ commentaire: "Annulé par l'administrateur." })
           });
-          notifier("Commande annulée.", "success");
-          chargerTout();
+          notifier("Commande annulée.", "success"); chargerTout();
         } catch(e) { notifier("Erreur", "error"); }
       };
     });
