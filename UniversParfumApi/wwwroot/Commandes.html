@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commandes - Univers Parfum</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f5f2f4;
+            color: #333;
+            padding: 30px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: #43243c;
+        }
+
+        a.retour {
+            color: #70445f;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 25px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            color: #43243c;
+            margin-bottom: 18px;
+        }
+
+        .grille {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        th {
+            color: #43243c;
+            background: #f8f4f7;
+        }
+
+        td.vide {
+            text-align: center;
+            color: #777;
+        }
+
+        button {
+            padding: 10px 16px;
+            background: #70445f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #43243c;
+        }
+
+        button.petit {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
+        button.secondaire {
+            background: #999;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        #message,
+        #messageDetail {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #c0392b;
+        }
+
+        #message.succes,
+        #messageDetail.succes {
+            color: #27ae60;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Gestion des commandes</h1>
+        <a class="retour" href="admin.html">← Retour au tableau de bord</a>
+    </header>
+
+    <section class="card">
+        <h2>Liste des commandes</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Statut</th>
+                    <th>Montant</th>
+                    <th>Préparateur</th>
+                    <th>Livreur</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tableauCommandes"></tbody>
+        </table>
+
+        <p id="message"></p>
+    </section>
+
+    <section class="card" id="detail" hidden>
+        <h2 id="titreDetail"></h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Référence</th>
+                    <th>Quantité</th>
+                    <th>Prix unitaire</th>
+                    <th>Indisponible</th>
+                </tr>
+            </thead>
+            <tbody id="tableauLignes"></tbody>
+        </table>
+
+        <form id="statutForm" style="margin-top: 25px;">
+            <div class="grille">
+                <div>
+                    <label for="statut">Statut</label>
+                    <select id="statut"></select>
+                </div>
+                <div>
+                    <label for="preparateur">Préparateur</label>
+                    <select id="preparateur"></select>
+                </div>
+                <div>
+                    <label for="livreur">Livreur</label>
+                    <select id="livreur"></select>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit">Enregistrer</button>
+                <button type="button" id="fermerDetail" class="secondaire">Fermer</button>
+            </div>
+
+            <p id="messageDetail"></p>
+        </form>
+    </section>
+
+    <script>
+        // Vérification de la session : même logique que les autres pages admin
+        const token = sessionStorage.getItem("token");
+        const role = sessionStorage.getItem("role");
+
+        if (!token || role !== "ADMINISTRATEUR") {
+            window.location.href = "login.html";
+        }
+
+        const API = "/api/commandes";
+
+        // Statuts proposés. Doivent rester identiques à ceux utilisés par l'application.
+        const STATUTS = [
+            "EN_ATTENTE",
+            "EN_PREPARATION",
+            "PREPAREE",
+            "EN_LIVRAISON",
+            "LIVREE",
+            "ANNULEE"
+        ];
+
+        const message = document.getElementById("message");
+        const messageDetail = document.getElementById("messageDetail");
+        const tableauCommandes = document.getElementById("tableauCommandes");
+        const tableauLignes = document.getElementById("tableauLignes");
+        const detail = document.getElementById("detail");
+        const titreDetail = document.getElementById("titreDetail");
+        const statutSelect = document.getElementById("statut");
+        const preparateurSelect = document.getElementById("preparateur");
+        const livreurSelect = document.getElementById("livreur");
+        const statutForm = document.getElementById("statutForm");
+
+        let personnel = [];
+        let commandeEnCours = null;
+
+        async function appeler(url, options = {}) {
+            const reponse = await fetch(url, {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (reponse.status === 401 || reponse.status === 403) {
+                sessionStorage.clear();
+                window.location.href = "login.html";
+                throw new Error("Session expirée.");
+            }
+
+            return reponse;
+        }
+
+        function afficherMessage(element, texteMessage, succes = false) {
+            element.textContent = texteMessage;
+            element.className = succes ? "succes" : "";
+        }
+
+        function cellule(texteCellule) {
+            const td = document.createElement("td");
+            td.textContent = texteCellule;
+            return td;
+        }
+
+        function nomPersonne(id) {
+            const p = personnel.find(x => x.id === id);
+            return p ? `${p.prenom} ${p.nom}` : "—";
+        }
+
+        function remplirSelect(select, liste, avecVide = true) {
+            select.innerHTML = "";
+
+            if (avecVide) {
+                select.appendChild(new Option("— Aucun —", ""));
+            }
+
+            liste.forEach(item => {
+                select.appendChild(new Option(item.texte, item.valeur));
+            });
+        }
+
+        async function chargerPersonnel() {
+            const reponse = await appeler(`${API}/personnel`);
+            personnel = await reponse.json();
+
+            remplirSelect(
+                preparateurSelect,
+                personnel
+                    .filter(p => p.role === "PREPARATEUR")
+                    .map(p => ({ texte: `${p.prenom} ${p.nom}`, valeur: p.id }))
+            );
+
+            remplirSelect(
+                livreurSelect,
+                personnel
+                    .filter(p => p.role === "LIVREUR")
+                    .map(p => ({ texte: `${p.prenom} ${p.nom}`, valeur: p.id }))
+            );
+        }
+
+        async function chargerCommandes() {
+            const reponse = await appeler(API);
+            const commandes = await reponse.json();
+
+            tableauCommandes.innerHTML = "";
+
+            if (commandes.length === 0) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 8;
+                td.className = "vide";
+                td.textContent = "Aucune commande pour le moment.";
+                tr.appendChild(td);
+                tableauCommandes.appendChild(tr);
+                return;
+            }
+
+            commandes.forEach(c => {
+                const tr = document.createElement("tr");
+
+                tr.appendChild(cellule(c.id));
+                tr.appendChild(cellule(new Date(c.dateCreation).toLocaleString("fr-FR")));
+                tr.appendChild(cellule(`Client n°${c.clientId}`));
+                tr.appendChild(cellule(c.statut));
+                tr.appendChild(cellule(`${c.montantTotal.toFixed(2)} €`));
+                tr.appendChild(cellule(nomPersonne(c.preparateurId)));
+                tr.appendChild(cellule(nomPersonne(c.livreurId)));
+
+                const actions = document.createElement("td");
+                const bouton = document.createElement("button");
+                bouton.textContent = "Voir";
+                bouton.className = "petit";
+                bouton.addEventListener("click", () => ouvrirDetail(c));
+                actions.appendChild(bouton);
+                tr.appendChild(actions);
+
+                tableauCommandes.appendChild(tr);
+            });
+        }
+
+        function ouvrirDetail(c) {
+            commandeEnCours = c;
+
+            titreDetail.textContent = `Commande n°${c.id}`;
+
+            tableauLignes.innerHTML = "";
+
+            if (!c.lignes || c.lignes.length === 0) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 4;
+                td.className = "vide";
+                td.textContent = "Cette commande ne contient aucune ligne.";
+                tr.appendChild(td);
+                tableauLignes.appendChild(tr);
+            } else {
+                c.lignes.forEach(l => {
+                    const tr = document.createElement("tr");
+                    tr.appendChild(cellule(l.parfumRef));
+                    tr.appendChild(cellule(l.quantite));
+                    tr.appendChild(cellule(`${l.prixUnitaire.toFixed(2)} €`));
+                    tr.appendChild(cellule(l.indisponible ? "Oui" : "Non"));
+                    tableauLignes.appendChild(tr);
+                });
+            }
+
+            statutSelect.value = c.statut;
+            preparateurSelect.value = c.preparateurId ?? "";
+            livreurSelect.value = c.livreurId ?? "";
+
+            detail.hidden = false;
+            detail.scrollIntoView({ behavior: "smooth" });
+        }
+
+        document.getElementById("fermerDetail").addEventListener("click", () => {
+            detail.hidden = true;
+            commandeEnCours = null;
+            afficherMessage(messageDetail, "");
+        });
+
+        statutForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            if (!commandeEnCours) return;
+
+            const donnees = {
+                statut: statutSelect.value,
+                preparateurId: preparateurSelect.value ? Number(preparateurSelect.value) : null,
+                livreurId: livreurSelect.value ? Number(livreurSelect.value) : null
+            };
+
+            try {
+                const reponse = await appeler(`${API}/${commandeEnCours.id}/statut`, {
+                    method: "PUT",
+                    body: JSON.stringify(donnees)
+                });
+
+                if (!reponse.ok) {
+                    const erreur = await reponse.json().catch(() => ({}));
+                    throw new Error(erreur.message || "Mise à jour impossible.");
+                }
+
+                const miseAJour = await reponse.json();
+
+                afficherMessage(messageDetail, "Commande mise à jour.", true);
+
+                await chargerCommandes();
+                ouvrirDetail(miseAJour);
+
+            } catch (error) {
+                afficherMessage(messageDetail, error.message);
+            }
+        });
+
+        // Remplit la liste des statuts
+        remplirSelect(
+            statutSelect,
+            STATUTS.map(s => ({ texte: s, valeur: s })),
+            false
+        );
+
+        // Le personnel doit être chargé avant les commandes, pour afficher les noms.
+        async function init() {
+            await chargerPersonnel();
+            await chargerCommandes();
+        }
+
+        init().catch(error => afficherMessage(message, error.message));
+    </script>
+
+</body>
+</html>

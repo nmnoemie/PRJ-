@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Univers Parfum</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            background: #f5f2f4;
+            color: #333;
+        }
+
+        /* ===== Barre latérale ===== */
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #211326, #43243c);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: block;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            color: #e8dce5;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .sidebar nav a:hover,
+        .sidebar nav a.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+        }
+
+        .sidebar .logout {
+            margin-top: auto;
+            padding: 12px;
+            background: #70445f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .sidebar .logout:hover {
+            background: #8a5a7a;
+        }
+
+        /* ===== Contenu ===== */
+        .content {
+            flex: 1;
+            padding: 40px;
+        }
+
+        header h1 {
+            color: #43243c;
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            color: #777;
+            margin-bottom: 35px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 25px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            color: #43243c;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #777;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .card .badge {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 5px 10px;
+            font-size: 12px;
+            color: #70445f;
+            background: #f0e6ed;
+            border-radius: 20px;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 700px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 20px;
+            }
+
+            .logo {
+                margin-bottom: 15px;
+            }
+
+            .content {
+                padding: 25px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">Univers Parfum</div>
+
+        <nav>
+            <a href="#" class="active">Tableau de bord</a>
+           <a href="parfums.html">Parfums</a>
+           <a href="commandes.html">Commandes</a>
+          <a href="utilisateurs.html">Utilisateurs</a>
+        </nav>
+
+        <button class="logout" id="logoutButton">Se déconnecter</button>
+    </aside>
+
+    <main class="content">
+        <header>
+            <h1>Tableau de bord</h1>
+            <p>Vous êtes connecté en tant qu'administrateur.</p>
+        </header>
+
+        <section class="cards">
+            <div class="card">
+                <h2>Parfums</h2>
+                <p>Gérer le catalogue, les prix et les stocks.</p>
+                <span class="badge">Bientôt disponible</span>
+            </div>
+
+            <div class="card">
+                <h2>Commandes</h2>
+                <p>Suivre les commandes et leur statut.</p>
+                <span class="badge">Bientôt disponible</span>
+            </div>
+
+            <div class="card">
+                <h2>Utilisateurs</h2>
+                <p>Ajouter, modifier ou désactiver des comptes.</p>
+                <span class="badge">Bientôt disponible</span>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Le token et le rôle ont été stockés par login.html après la connexion.
+        const token = sessionStorage.getItem("token");
+        const role = sessionStorage.getItem("role");
+
+        // Si l'utilisateur n'est pas connecté en tant qu'admin, on le renvoie à la connexion.
+        if (!token || role !== "ADMINISTRATEUR") {
+            window.location.href = "login.html";
+        }
+
+        // Déconnexion : on efface la session et on retourne à la page de connexion.
+        document.getElementById("logoutButton").addEventListener("click", () => {
+            sessionStorage.clear();
+            window.location.href = "login.html";
+        });
+    </script>
+
+</body>
+</html>
