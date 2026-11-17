@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utilisateurs - Univers Parfum</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f5f2f4;
+            color: #333;
+            padding: 30px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: #43243c;
+        }
+
+        a.retour {
+            color: #70445f;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 25px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            color: #43243c;
+            margin-bottom: 18px;
+        }
+
+        .grille {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+
+        button {
+            padding: 10px 16px;
+            background: #70445f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #43243c;
+        }
+
+        button.petit {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
+        button.secondaire {
+            background: #999;
+        }
+
+        button.danger {
+            background: #c0392b;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        th {
+            color: #43243c;
+            background: #f8f4f7;
+        }
+
+        td.vide {
+            text-align: center;
+            color: #777;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #c0392b;
+        }
+
+        #message.succes {
+            color: #27ae60;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Gestion des utilisateurs</h1>
+        <a class="retour" href="admin.html">← Retour au tableau de bord</a>
+    </header>
+
+    <section class="card">
+        <h2 id="titreFormulaire">Ajouter un utilisateur</h2>
+
+        <form id="utilisateurForm">
+            <div class="grille">
+                <div>
+                    <label for="nom">Nom</label>
+                    <input type="text" id="nom" required>
+                </div>
+                <div>
+                    <label for="prenom">Prénom</label>
+                    <input type="text" id="prenom" required>
+                </div>
+                <div>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div>
+                    <label for="role">Rôle</label>
+                    <select id="role" required>
+                        <option value="ADMINISTRATEUR">Administrateur</option>
+                        <option value="PREPARATEUR">Préparateur</option>
+                        <option value="LIVREUR">Livreur</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="motDePasse">Mot de passe</label>
+                    <input type="password" id="motDePasse" required>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" id="submitButton">Ajouter</button>
+                <button type="button" id="annulerButton" class="secondaire" hidden>Annuler</button>
+            </div>
+
+            <p id="message"></p>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Liste des utilisateurs</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Email</th>
+                    <th>Rôle</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableau"></tbody>
+        </table>
+    </section>
+
+    <script>
+        // Vérification de la session : même logique que les autres pages admin
+        const token = sessionStorage.getItem("token");
+        const role = sessionStorage.getItem("role");
+
+        if (!token || role !== "ADMINISTRATEUR") {
+            window.location.href = "login.html";
+        }
+
+        const API = "/api/utilisateurs";
+
+        const form = document.getElementById("utilisateurForm");
+        const message = document.getElementById("message");
+        const tableau = document.getElementById("tableau");
+        const submitButton = document.getElementById("submitButton");
+        const annulerButton = document.getElementById("annulerButton");
+        const titre = document.getElementById("titreFormulaire");
+        const motDePasseInput = document.getElementById("motDePasse");
+
+        // Id de l'utilisateur en cours de modification (null = ajout)
+        let idEnEdition = null;
+
+        async function appeler(url, options = {}) {
+            const reponse = await fetch(url, {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (reponse.status === 401 || reponse.status === 403) {
+                sessionStorage.clear();
+                window.location.href = "login.html";
+                throw new Error("Session expirée.");
+            }
+
+            return reponse;
+        }
+
+        function afficherMessage(texte, succes = false) {
+            message.textContent = texte;
+            message.className = succes ? "succes" : "";
+        }
+
+        function cellule(texteCellule) {
+            const td = document.createElement("td");
+            td.textContent = texteCellule;
+            return td;
+        }
+
+        async function chargerUtilisateurs() {
+            const reponse = await appeler(API);
+            const utilisateurs = await reponse.json();
+
+            tableau.innerHTML = "";
+
+            if (utilisateurs.length === 0) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = 5;
+                td.className = "vide";
+                td.textContent = "Aucun utilisateur.";
+                tr.appendChild(td);
+                tableau.appendChild(tr);
+                return;
+            }
+
+            utilisateurs.forEach(u => {
+                const tr = document.createElement("tr");
+
+                tr.appendChild(cellule(u.nom));
+                tr.appendChild(cellule(u.prenom));
+                tr.appendChild(cellule(u.email));
+                tr.appendChild(cellule(u.role));
+
+                const actions = document.createElement("td");
+
+                const boutonModifier = document.createElement("button");
+                boutonModifier.textContent = "Modifier";
+                boutonModifier.className = "petit";
+                boutonModifier.addEventListener("click", () => preparerModification(u));
+
+                const boutonSupprimer = document.createElement("button");
+                boutonSupprimer.textContent = "Supprimer";
+                boutonSupprimer.className = "petit danger";
+                boutonSupprimer.style.marginLeft = "6px";
+                boutonSupprimer.addEventListener("click", () => supprimerUtilisateur(u.id, u.email));
+
+                actions.appendChild(boutonModifier);
+                actions.appendChild(boutonSupprimer);
+                tr.appendChild(actions);
+
+                tableau.appendChild(tr);
+            });
+        }
+
+        function preparerModification(u) {
+            idEnEdition = u.id;
+
+            document.getElementById("nom").value = u.nom;
+            document.getElementById("prenom").value = u.prenom;
+            document.getElementById("email").value = u.email;
+            document.getElementById("role").value = u.role;
+
+            // En modification, le mot de passe est facultatif
+            motDePasseInput.value = "";
+            motDePasseInput.required = false;
+            motDePasseInput.placeholder = "Laisser vide pour ne pas changer";
+
+            titre.textContent = "Modifier l'utilisateur";
+            submitButton.textContent = "Enregistrer";
+            annulerButton.hidden = false;
+            afficherMessage("");
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function reinitialiserFormulaire() {
+            idEnEdition = null;
+            form.reset();
+            motDePasseInput.required = true;
+            motDePasseInput.placeholder = "";
+            titre.textContent = "Ajouter un utilisateur";
+            submitButton.textContent = "Ajouter";
+            annulerButton.hidden = true;
+        }
+
+        annulerButton.addEventListener("click", () => {
+            reinitialiserFormulaire();
+            afficherMessage("");
+        });
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const donnees = {
+                nom: document.getElementById("nom").value.trim(),
+                prenom: document.getElementById("prenom").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                role: document.getElementById("role").value,
+                motDePasse: motDePasseInput.value || null
+            };
+
+            try {
+                let reponse;
+
+                if (idEnEdition === null) {
+                    reponse = await appeler(API, {
+                        method: "POST",
+                        body: JSON.stringify(donnees)
+                    });
+                } else {
+                    reponse = await appeler(`${API}/${idEnEdition}`, {
+                        method: "PUT",
+                        body: JSON.stringify(donnees)
+                    });
+                }
+
+                if (!reponse.ok) {
+                    const erreur = await reponse.json().catch(() => ({}));
+                    throw new Error(erreur.message || "Données invalides ou erreur serveur.");
+                }
+
+                afficherMessage(
+                    idEnEdition === null ? "Utilisateur ajouté." : "Utilisateur modifié.",
+                    true
+                );
+
+                reinitialiserFormulaire();
+                await chargerUtilisateurs();
+
+            } catch (error) {
+                afficherMessage(error.message);
+            }
+        });
+
+        async function supprimerUtilisateur(id, email) {
+            if (!confirm(`Supprimer l'utilisateur ${email} ?`)) return;
+
+            try {
+                const reponse = await appeler(`${API}/${id}`, { method: "DELETE" });
+
+                if (!reponse.ok) {
+                    const erreur = await reponse.json().catch(() => ({}));
+                    throw new Error(erreur.message || "Suppression impossible.");
+                }
+
+                afficherMessage("Utilisateur supprimé.", true);
+                await chargerUtilisateurs();
+
+            } catch (error) {
+                afficherMessage(error.message);
+            }
+        }
+
+        chargerUtilisateurs().catch(error => afficherMessage(error.message));
+    </script>
+
+</body>
+</html>
